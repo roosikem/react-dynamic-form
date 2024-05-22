@@ -1,0 +1,221 @@
+To create a dynamic form using Ant Design in React, we will follow a similar structure to what was outlined earlier, but with Ant Design components. We'll generate the form inputs dynamically based on JSON fields, handle form submission, and edit functionality.
+
+### Step-by-Step Guide
+
+1. **Set up your project**:
+    - Install Ant Design and Axios:
+      ```sh
+      npm install antd axios
+      ```
+
+2. **Create React Components**:
+
+#### 1. App Component
+
+The main component to fetch JSON fields and render the form.
+
+```javascript
+import React, { useEffect, useState } from 'react';
+import { Layout, Form, Button, Spin } from 'antd';
+import FormGenerator from './FormGenerator';
+import axios from 'axios';
+
+const { Header, Content } = Layout;
+
+const App = () => {
+    const [jsonFields, setJsonFields] = useState(null);
+    const [formData, setFormData] = useState(null);
+    const [formId, setFormId] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchJsonFields();
+    }, []);
+
+    const fetchJsonFields = async () => {
+        try {
+            const response = await axios.get('/json-fields');
+            setJsonFields(response.data);
+        } catch (error) {
+            console.error('Error fetching JSON fields:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const saveFormData = async (data) => {
+        try {
+            const response = await axios.post('/save-form-data', data);
+            console.log('Form data saved:', response.data);
+        } catch (error) {
+            console.error('Error saving form data:', error);
+        }
+    };
+
+    const fetchFormData = async (id) => {
+        try {
+            const response = await axios.get(`/form-data/${id}`);
+            setFormData(response.data);
+        } catch (error) {
+            console.error('Error fetching form data:', error);
+        }
+    };
+
+    const updateFormData = async (id, data) => {
+        try {
+            const response = await axios.put(`/update-form-data/${id}`, data);
+            console.log('Form data updated:', response.data);
+        } catch (error) {
+            console.error('Error updating form data:', error);
+        }
+    };
+
+    return (
+        <Layout>
+            <Header>
+                <h1 style={{ color: 'white' }}>Dynamic JSON Form</h1>
+            </Header>
+            <Content style={{ padding: '50px' }}>
+                {loading ? (
+                    <Spin />
+                ) : (
+                    <FormGenerator
+                        jsonFields={jsonFields}
+                        formData={formData}
+                        saveFormData={saveFormData}
+                        fetchFormData={fetchFormData}
+                        updateFormData={updateFormData}
+                        setFormId={setFormId}
+                        formId={formId}
+                    />
+                )}
+            </Content>
+        </Layout>
+    );
+};
+
+export default App;
+```
+
+#### 2. FormGenerator Component
+
+This component generates the form based on JSON fields and handles form submission using Ant Design components.
+
+```javascript
+import React, { useEffect, useState } from 'react';
+import { Form, Input, InputNumber, Switch, Button, Card } from 'antd';
+
+const FormGenerator = ({ jsonFields, formData, saveFormData, fetchFormData, updateFormData, setFormId, formId }) => {
+    const [form] = Form.useForm();
+
+    useEffect(() => {
+        if (formData) {
+            form.setFieldsValue(formData);
+        }
+    }, [formData, form]);
+
+    const onFinish = (values) => {
+        if (formId) {
+            updateFormData(formId, values);
+        } else {
+            saveFormData(values);
+        }
+    };
+
+    const renderField = (field, key) => {
+        const { name, type, value } = field;
+
+        switch (type) {
+            case 'object':
+                return (
+                    <Card title={name} key={key}>
+                        {Object.keys(field).map((subKey) => renderField(field[subKey], `${key}.${subKey}`))}
+                    </Card>
+                );
+            case 'array':
+                return (
+                    <Card title={name} key={key}>
+                        {field.map((item, index) => renderField(item, `${key}[${index}]`))}
+                    </Card>
+                );
+            case 'string':
+                return (
+                    <Form.Item label={name} name={key} key={key} initialValue={value}>
+                        <Input />
+                    </Form.Item>
+                );
+            case 'number':
+                return (
+                    <Form.Item label={name} name={key} key={key} initialValue={value}>
+                        <InputNumber />
+                    </Form.Item>
+                );
+            case 'boolean':
+                return (
+                    <Form.Item label={name} name={key} key={key} valuePropName="checked" initialValue={value}>
+                        <Switch />
+                    </Form.Item>
+                );
+            default:
+                return null;
+        }
+    };
+
+    return (
+        <Form form={form} layout="vertical" onFinish={onFinish}>
+            {Object.keys(jsonFields).map((key) => renderField(jsonFields[key], key))}
+            <Form.Item>
+                <Button type="primary" htmlType="submit">
+                    Submit
+                </Button>
+            </Form.Item>
+        </Form>
+    );
+};
+
+export default FormGenerator;
+```
+
+### 3. Backend Server
+
+Ensure your backend server has the following endpoints:
+
+1. **Fetch JSON Fields**:
+    ```java
+    @GetMapping("/json-fields")
+    public List<JsonField> getJsonFields() {
+        // Fetch and return the JSON fields from the database
+    }
+    ```
+
+2. **Save Form Data**:
+    ```java
+    @PostMapping("/save-form-data")
+    public ResponseEntity<?> saveFormData(@RequestBody Map<String, Object> formData) {
+        // Save form data to the database
+    }
+    ```
+
+3. **Fetch Form Data by ID**:
+    ```java
+    @GetMapping("/form-data/{id}")
+    public FormData getFormData(@PathVariable int id) {
+        // Fetch and return form data by ID from the database
+    }
+    ```
+
+4. **Update Form Data**:
+    ```java
+    @PutMapping("/update-form-data/{id}")
+    public ResponseEntity<?> updateFormData(@PathVariable int id, @RequestBody Map<String, Object> formData) {
+        // Update form data by ID in the database
+    }
+    ```
+
+### Explanation
+
+1. **App Component**: Manages fetching JSON fields, form data, and handles saving/updating form data.
+2. **FormGenerator Component**: Uses Ant Design components to dynamically generate form inputs based on JSON fields, handles changes and submissions.
+3. **Backend Server**: Provides endpoints to fetch JSON fields, save form data, fetch data by ID, and update data.
+
+This setup ensures a dynamic form is generated based on JSON fields, allowing data to be saved and edited seamlessly. Adjust the code as necessary to fit your specific database schema and backend setup.
