@@ -1,0 +1,51 @@
+[
+    {
+        "name": "firstName",
+        "type": "string",
+        "value": ""
+    },
+    {
+        "name": "lastName",
+        "type": "string",
+        "value": ""
+    },
+    {
+        "name": "age",
+        "type": "number",
+        "value": null
+    },
+    {
+        "name": "isStudent",
+        "type": "boolean",
+        "value": false
+    },
+    {
+        "name": "address",
+        "type": "object",
+        "fields": [
+            {
+                "name": "street",
+                "type": "string",
+                "value": ""
+            },
+            {
+                "name": "city",
+                "type": "string",
+                "value": ""
+            },
+            {
+                "name": "zipcode",
+                "type": "string",
+                "value": ""
+            }
+        ]
+    },
+    {
+        "name": "hobbies",
+        "type": "array",
+        "items": {
+            "type": "string",
+            "value": ""
+        }
+    }
+]
